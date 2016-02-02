@@ -6,21 +6,36 @@
 
 int main(int argc, char * argv[]){
 
-   char input[100];
-   char *exit = "exit";
-   char *blank = "\n";
-   int x = 1;
-   while(x){
+   // helper arrays
+   char input[512];
+   char util[512];
 
-	printf("cz> ");
-	fgets(input, 100, stdin);
-	
-	x = strncmp(blank, input, 1);
+   // built in commands
+   char *ciao = "exit";
+   char *cd = "cd";
+   char *pwd = "pwd";
+   char *wait = "wait";
 
-	if(x != 0){
-		fputs(input, stdout);
- 	}
-	x = strncmp(exit, input, 4);
+   while(1){
+
+	printf("CShell> ");
+	fgets(input, 512, stdin);
+
+	if (strncmp(cd, input, 2) == 0) {
+		printf("changing directory\n");
+	}
+
+	// print working directory
+	else if (strncmp(pwd, input, 3) == 0) {
+		getcwd(util, 512);
+		puts(util);
+	}
+
+	// exiting
+	else if (strncmp(ciao, input, 4) == 0) {
+		exit(0);
+	}
+
    }
 
    return 0;
