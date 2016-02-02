@@ -4,11 +4,57 @@
 #include <string.h>
 #include <sys/wait.h>
 
+// constants
+const int SIZE = 512;
+const int CHAR_SPACE = 32;
+const char *space = " ";
+
+
+void shiftString(char * c, int offset, int sz) {
+	int i = 0;
+	while(i < sz) {
+		c[i] = c[offset];
+		i++;
+		offset++;
+	}
+}
+
+void stripString(char * c) {
+	if (strncmp(space, c, 1) == 0) {
+		int i  = 0;
+		while(c[i] == CHAR_SPACE) {
+			i++;
+		}
+		shiftString(c, i, SIZE);
+	}
+}
+
+void changeDirectory(char * c) {
+	puts(c);
+	
+	int i = 2;
+	while (c[i] == CHAR_SPACE) {
+		i++;
+	}
+	printf("i is %d\n", i);
+	printf("c[i] is %c\n", c[i]);
+
+	// changing to home
+	if (c[i] == 0 || c[i] == '\n') {
+		puts(getenv("HOME"));
+		chdir(getenv("HOME"));
+	} else {
+		shiftString(c, i, SIZE);
+		puts(c);
+		chdir(c);
+	}
+}
+
 int main(int argc, char * argv[]){
 
    // helper arrays
-   char input[512];
-   char util[512];
+   char input[SIZE];
+   char util[SIZE];
 
    // built in commands
    char *ciao = "exit";
@@ -19,15 +65,17 @@ int main(int argc, char * argv[]){
    while(1){
 
 	printf("CShell> ");
-	fgets(input, 512, stdin);
+	fgets(input, SIZE, stdin);
+
+	stripString(input);
 
 	if (strncmp(cd, input, 2) == 0) {
-		printf("changing directory\n");
+		changeDirectory(input);
 	}
 
 	// print working directory
 	else if (strncmp(pwd, input, 3) == 0) {
-		getcwd(util, 512);
+		getcwd(util, SIZE);
 		puts(util);
 	}
 
