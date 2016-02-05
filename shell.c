@@ -7,8 +7,6 @@
 // constants
 const int SIZE = 512;
 const int CHAR_SPACE = 32;
-const char *space = " ";
-
 
 void shiftString(char * c, int offset, int sz) {
 	int i = 0;
@@ -20,6 +18,7 @@ void shiftString(char * c, int offset, int sz) {
 }
 
 void stripString(char * c) {
+	char *space = " ";
 	if (strncmp(space, c, 1) == 0) {
 		int i  = 0;
 		while(c[i] == CHAR_SPACE) {
@@ -38,6 +37,7 @@ void changeDirectory(char * c) {
 	}
 	printf("i is %d\n", i);
 	printf("c[i] is %c\n", c[i]);
+	printf("c is %s\n", c);
 
 	// changing to home
 	if (c[i] == 0 || c[i] == '\n') {
@@ -49,6 +49,7 @@ void changeDirectory(char * c) {
 		chdir(c);
 	}
 }
+
 
 int main(int argc, char * argv[]){
 
