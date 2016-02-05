@@ -8,6 +8,16 @@
 const int SIZE = 512;
 const int CHAR_SPACE = 32;
 
+void printArray(char ** c, int size){
+
+	int i = 0;
+	for(i; i< size; i++){
+
+		puts(c[i]);
+		
+	}
+}
+
 void shiftString(char * c, int offset, int sz) {
 	int i = 0;
 	while(i < sz) {
@@ -35,18 +45,46 @@ void changeDirectory(char * c) {
 	while (c[i] == CHAR_SPACE) {
 		i++;
 	}
-	printf("i is %d\n", i);
-	printf("c[i] is %c\n", c[i]);
-	printf("c is %s\n", c);
+	//printf("i is %d\n", i);
+	//printf("c[i] is %c\n", c[i]);
+	//printf("c is %s\n", c);
 
 	// changing to home
 	if (c[i] == 0 || c[i] == '\n') {
 		puts(getenv("HOME"));
 		chdir(getenv("HOME"));
 	} else {
-		shiftString(c, i, SIZE);
-		puts(c);
-		chdir(c);
+		//shiftString(c, i, SIZE);
+		char * token[SIZE];
+		int z = 0;
+		token[z] = strtok(NULL, "/");
+		while(token[z] != NULL) {
+			z++;
+			token[z] = strtok(NULL, "/");
+		} 
+
+		printArray(token,z);
+		puts(token[0]);
+
+		if(token[0] == "home"){
+
+			printf("match!\n");
+			char * path;
+			int p = 0;
+			for(p; p < z; p++){
+
+					strcat(path, token[p]);		
+			}
+
+			puts(path);
+
+		}else{
+
+
+		}	
+
+		//puts(tok);
+		//chdir(tok);
 	}
 }
 
