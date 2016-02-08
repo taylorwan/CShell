@@ -90,7 +90,7 @@ void printArray(char ** c, int size){
 	int i = 0;
 	for(i; i< size; i++){
 
-		printf("parsed tokens: %s at %d\n", c[i], i);
+		printf("Parsed tokens: %s at %d\n", c[i], i);
 		
 	}
 }
@@ -100,7 +100,7 @@ void printStack(char ** c, int size){
 	int i = 0;
 	for(i; i< size; i++){
 
-		printf("stack: %s at %d\n", c[i], i);
+		printf("Stack: %s at %d\n", c[i], i);
 		
 	}
 }
@@ -166,8 +166,7 @@ void stripString(char * c) {
 	}
 }
 
-void _changeDirectory(char * c) {
-	puts(c);
+void changeDirectory(char * c) {
 	int result;
 	char path[SIZE];
 	memset(&path[0], 0, sizeof(path));
@@ -182,7 +181,6 @@ void _changeDirectory(char * c) {
 	if (c[i] == 0 || c[i] == '\n') {
 
 		char* homePath = getenv("HOME");
-		printf("homePath is %s\n", homePath );
 		result = chdir(homePath);
 
 		if (result == 0){//chdir worked
@@ -212,8 +210,6 @@ void _changeDirectory(char * c) {
 			token[z] = strtok(NULL, "/");
 		} 
 
-		printArray(token, z);
-
 		//this means an absolute path
 		if(strncmp(home, token[0], 4) == 0){
 
@@ -234,13 +230,12 @@ void _changeDirectory(char * c) {
 					push(token[v]);
 				}
 			} else {
-				printf("the specified path does not exist\n");
-				printStack(pathStack, stackPointer);
+				printf("The specified path does not exist\n");
 			}
 
 
-		}else{//means a relative path
-			printStack(pathStack, stackPointer);
+		} else {
+		//means a relative path
 			copyStack();
 			bool root = false;
 
@@ -258,7 +253,8 @@ void _changeDirectory(char * c) {
 				}
 			}
 
-			if(root == false){//user has not gone past root
+			if(root == false){
+			//user has not gone past root
 				strcat(path, "/");
 				int p = 0;
 				for(p; p < stackPointer; p++){
@@ -266,52 +262,20 @@ void _changeDirectory(char * c) {
 					strcat(path, "/");
 				}
 
-				puts(path);
-
-				printStack(pathStack, stackPointer);
-
 				result = chdir(path);
 				if(result != 0){
 					printf("The path specified does not exist\n");
 					replaceStack();
-					printStack(pathStack, stackPointer);
 
 				}
-			} else {//user goes past root, in command, so reload stack
-				printf("cannot move above root\n");
+			} else {
+			//user goes past root, in command, so reload stack
+				printf("Cannot move above root\n");
 				replaceStack();
-				printStack(pathStack, stackPointer);
-
 			}
-
-
-
-
 		}	
-		
-		//puts(tok);
-		//chdir(tok);
 	}
-
 }
-
-// void changeDirectory(char * c) {
-// 	printf("It's in here\n");
-// 	char * t;
-// 	char * path;
-// 	const char s[2] = " ";
-// 	printf("setting t\n");
-// 	t = strtok(c, s);
-// 	while (t) {
-// 		printf("in while\n");
-// 		printf("t is %s\n", t);
-// 		printf("path is %s\n", path);
-// 		strcat(path, t);
-// 		t = strtok(NULL, s);
-// 	}
-// 	printf("path is %s\n", path);
-// 	puts(path);
-// }
 
 
 int main(int argc, char * argv[]){
@@ -333,13 +297,12 @@ int main(int argc, char * argv[]){
 	stripString(input);
 
 	if (strncmp(cd, input, 2) == 0) {
-		_changeDirectory(input);
+		changeDirectory(input);
 	}
 
 	// print working directory
 	else if (strncmp(pwd, input, 3) == 0) {
 		getcwd(util, SIZE);
-		puts(util);
 	}
 
 	// exiting
