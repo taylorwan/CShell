@@ -22,6 +22,18 @@ void stripNewline(char * c){
 	}
 }
 
+void condensePath(char * c){
+
+	int i = 0;
+	char util[SIZE];
+	while(c[i] != CHAR_NULL){
+		if (c[i] == '\n') {
+			c[i] = '\0';
+		}
+		i++;
+	}
+}
+
 void printArray(char ** c, int size){
 
 	int i = 0;
@@ -32,9 +44,10 @@ void printArray(char ** c, int size){
 	}
 }
 
+
 void shiftString(char * c, int offset, int sz) {
 	int i = 0;
-	while(i < sz) {
+	while(i < sz && c[i]) {
 		c[i] = c[offset];
 		i++;
 		offset++;
@@ -52,7 +65,7 @@ void stripString(char * c) {
 	}
 }
 
-void changeDirectory(char * c) {
+void _changeDirectory(char * c) {
 	puts(c);
 	
 	int i = 2;
@@ -87,16 +100,25 @@ void changeDirectory(char * c) {
 		if(strncmp(home, token[0], 4) == 0){
 
 			printf("match!\n");
+			printf("creating path\n");
 			char * path;
 			// path = '\0';
-			puts(path);
+			printf("printing path\n");
+			printf("%s\n", path);
 
 			int p = 0;
 			for(p; p < z; p++){
+				printf("for loop\n");
 				puts(path);
+				printf("concat 1\n");
 				strcat(path, token[p]);
+				printf("concat 2\n");
 				strcat(path, "/");
 			}
+
+			printf("shift string\n");
+			shiftString(path, 2, SIZE);
+			printf("printing\n");
 
 			puts(path);
 
@@ -112,20 +134,38 @@ void changeDirectory(char * c) {
 	}
 }
 
+void changeDirectory(char * c) {
+	printf("It's in here\n");
+	char * t;
+	char * path;
+	const char s[2] = " ";
+	printf("setting t\n");
+	t = strtok(c, s);
+	while (t) {
+		printf("in while\n");
+		printf("t is %s\n", t);
+		printf("path is %s\n", path);
+		strcat(path, t);
+		t = strtok(NULL, s);
+	}
+	printf("path is %s\n", path);
+	puts(path);
+}
+
 
 int main(int argc, char * argv[]){
 
-   // helper arrays
-   char input[SIZE];
-   char util[SIZE];
+	// helper arrays
+	char input[SIZE];
+	char util[SIZE];
 
-   // built in commands
-   char *ciao = "exit";
-   char *cd = "cd";
-   char *pwd = "pwd";
-   char *wait = "wait";
+	// built in commands
+	char *ciao = "exit";
+	char *cd = "cd";
+	char *pwd = "pwd";
+	char *wait = "wait";
 
-   while(1){
+	while(1){
 
 	printf("CShell> ");
 	fgets(input, SIZE, stdin);
@@ -133,7 +173,7 @@ int main(int argc, char * argv[]){
 	stripString(input);
 
 	if (strncmp(cd, input, 2) == 0) {
-		changeDirectory(input);
+		_changeDirectory(input);
 	}
 
 	// print working directory
@@ -147,7 +187,7 @@ int main(int argc, char * argv[]){
 		exit(0);
 	}
 
-   }
+	}
 
-   return 0;
+	return 0;
 }
