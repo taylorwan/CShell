@@ -358,10 +358,10 @@ int main(int argc, char * argv[]){
 
 	fillPathStack();
 
-	char* hello = "ab    cd ef gh";
-	int idx = 0;
-	idx = nextNonSpaceChar(hello, idx);
-	printf("idx %d\n", idx);
+	// char* hello = "ab    cd ef gh";
+	// int idx = 0;
+	// idx = nextNonSpaceChar(hello, idx);
+	// printf("idx %d\n", idx);
 
 	// built in commands
 
@@ -412,6 +412,37 @@ int main(int argc, char * argv[]){
 
 		//should only be one redirection >
 		strcpy(util, input);
+		char * cmd;
+		char * out;
+		char * arrow = ">";
+		char * ptr = strtok(util, "> ");
+		bool error = false;
+		int count = 0;
+		int charCount = countChar(input, arrow[0]);
+		while (ptr != NULL & error == false) {
+			// printf("Running while with count %d\n", count);
+			// printf("Util is %s\n", util);
+			if (charCount > 1) {
+				error = true;
+				break;
+			}
+			else if (count == 0) {
+				cmd = ptr;
+				// printf("Command is: %s\n", cmd);
+			} else if (count == 1) {
+				out = ptr;
+				// printf("Output redirected to: %s\n", out);
+			} else {
+				error = true;
+				break;
+			}
+			ptr = strtok(NULL, "> ");
+			count++;
+		}
+		if (error == true || (charCount+1 != count && charCount > 0)) {
+			write(STDERR_FILENO, error_message, strlen(error_message));
+			continue;
+		}
 
 
 		// char* ret = strtok(util, ">");
