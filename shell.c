@@ -29,10 +29,12 @@ char* historyArr[200];
 const int HISTORYARR_SIZE = 200;
 int historyCount = 0;
 
+// defining true and false
 typedef enum {true, false} bool;
 
+/** printHistory: prints the last 10 items in history
+ */
 void printHistory(){
-
 	int i = 10;
 	while(i > 0){
 		if(historyCount >= i){
@@ -40,9 +42,11 @@ void printHistory(){
 		}
 		i--;
 	}
-
 }
 
+/** addToHistory: add an item to history
+ * @param c - command to add
+ */
 void addToHistory(char* c){
 
 	if(historyCount == HISTORYARR_SIZE){
@@ -66,6 +70,8 @@ void addToHistory(char* c){
 	} 
 }
 
+/** clearHistory: clear the history
+ */
 void clearHistory(){
 
 	while(historyCount != 0){
@@ -74,6 +80,9 @@ void clearHistory(){
 	}
 }
 
+/** push: push to stack
+ * @param c - item to push
+ */
 void push(char* c){
 	if(stackPointer < PATHSTACK_SIZE){
 
@@ -84,24 +93,31 @@ void push(char* c){
 	}
 }
 
+/** clearHistory: clear the history
+ * @return - the item removed
+ */
 void pop(){
 	if(stackPointer-1 >= 0){
+		char * val = pathStack[stackPointer-1];
 		free(pathStack[stackPointer-1]);
 		stackPointer--;
-	} else {
-		exit(10);
+		return val;
 	}
+	// exit on negative index
+	exit(10);
 }
 
+/** clearStack: clear the stack
+ */
 void clearStack(){
-
 	while(stackPointer != 0){
 		pop();
 	}
 }
 
+/** clearCopyStack: clear the copy stack
+ */
 void clearCopyStack(){
-
 	while(copyStackPointer != 0){
 		free(copyPathStack[copyStackPointer-1]);
 		copyStackPointer--;
@@ -109,8 +125,9 @@ void clearCopyStack(){
 	}
 }
 
+/** copyStack: copy the stack to our copy stack
+ */
 void copyStack(){
-
 	copyStackPointer = stackPointer;
 
 	int i = 0;
@@ -120,11 +137,11 @@ void copyStack(){
 		strcpy(copy, pathStack[i]);
 		copyPathStack[i] = copy;
 	}
-
 }
 
+/** replaceStack: replace the stack with our copy stack
+ */
 void replaceStack(){
-
 	clearStack();
 
 	stackPointer = copyStackPointer;
@@ -137,28 +154,33 @@ void replaceStack(){
 	}
 }
 
-void printArray(char ** c, int size){
-
+/** _printArray: print an array of strings
+ * @param c - the array to print
+ * @param sz - the size of the array to print
+ */
+void _printArray(char ** c, int sz){
 	int i = 0;
-	for(i; i< size; i++){
-
+	for(i; i< sz; i++){
 		printf("Parsed tokens: %s at %d\n", c[i], i);
-		
 	}
 }
 
-void printStack(char ** c, int size){
-
+/** printStack: print a stack
+ * @param c - the stack (an array of strings) to print
+ * @param sz - the size of the stack (array) to print
+ */
+void printStack(char ** c, int sz){
 	int i = 0;
-	for(i; i< size; i++){
-
+	for(i; i< sz; i++){
 		printf("Stack: %s at %d\n", c[i], i);
-		
 	}
 }
 
+/** fillPathStack: populate our stack with the current path
+ * @param c - the array to print
+ * @param sz - the size of the array to print
+ */
 void fillPathStack(){
-
 	char util[SIZE];
 	getcwd(util, SIZE);
 
@@ -168,11 +190,9 @@ void fillPathStack(){
 		push(token);
 		token = strtok(NULL, "/");
 	} 
-
 }
 
 void stripNewline(char * c){
-
 	int i = 0;
 	while(c[i] != CHAR_NULL){
 		if (c[i] == '\n') {
@@ -194,6 +214,12 @@ int countChar(char * c, char charToCount){
 	return count;
 }
 
+/** shiftString: shifts a string left by striping characters
+ *				 from the front of the array
+ * @param c - String to shift
+ * @param offset - the number of spaces to shift the string
+ * @param sz - the size of the string
+ */
 void shiftString(char * c, int offset, int sz) {
 	int i = 0;
 	while(i < sz && c[i]) {
@@ -203,7 +229,9 @@ void shiftString(char * c, int offset, int sz) {
 	}
 }
 
-//removes whitespace
+/** stripSpaces: removes whitespace from a string
+ * @param c - String to strip
+ */
 void stripSpaces(char * c) {
 	char *space = " ";
 	if (strncmp(space, c, 1) == 0) {
@@ -215,35 +243,48 @@ void stripSpaces(char * c) {
 	}
 }
 
+/** stripEndOfLine: removes the last character from a string
+ * @param c - String to strip
+ */
 void stripEndOfLine(char * c) {
 	int len = strlen(c);
 	printf("length is: %d\n",(int)strlen(c));
 	c[len-1] = '\0';
 }
 
+/** stripString: strips spaces and the new line characters
+ * 				 from a string
+ * @param c - String to strip
+ */
 void stripString(char * c) {
 	stripSpaces(c);
 	stripNewline(c);
 }
 
+/** nextNonSpaceChar: return the next non-space character
+ * 					  from a string
+ * @param c - String to strip
+ * @param idx - start index
+ */
 int nextNonSpaceChar(char * c, int idx){
-
 	idx++;
 	while(idx < strlen(c) && c[idx] == CHAR_SPACE){
-
 		idx++;
 	}
 
 	return idx;
 }
 
+/** changeDirectory: handle the change directory command
+ * @param c - user input (beginning with "cd ")
+ */
 void changeDirectory(char * c) {
 	int result;
 	char path[SIZE];
 	memset(&path[0], 0, sizeof(path));
 
 
-	int i = 2;//jump to beginning of input path
+	int i = 2; //jump to beginning of input path
 	while (c[i] == CHAR_SPACE) {
 		i++;
 	}
@@ -252,7 +293,6 @@ void changeDirectory(char * c) {
 	if (c[i] == 0 || c[i] == '\n') {
 
 		char* homePath = getenv("HOME");
-		puts(homePath);
 		result = chdir(homePath);
 
 		if (result == 0){//chdir worked
