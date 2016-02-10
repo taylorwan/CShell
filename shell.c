@@ -14,6 +14,7 @@ const char *_wait = "wait";
 const char* history = "history";
 const char* bangbang = "!!";
 const char* bang = "!";
+const int CHAR_REDIRECT = 62;
 const char error_message[30] = "An error has occurred\n";
 const int SIZE = 512;
 const int INT_100 = 100;
@@ -349,6 +350,14 @@ void changeDirectory(char * c) {
 	}
 }
 
+int moveToLastCharInWord(char * c, int idx){
+
+	while( idx < strlen(c) && c[idx] != ' ' && c[idx] != '>'){
+
+		idx++;
+	}
+	return idx;
+}
 
 int main(int argc, char * argv[]){
 
@@ -358,10 +367,32 @@ int main(int argc, char * argv[]){
 
 	fillPathStack();
 
-	char* hello = "ab    cd ef gh";
-	int idx = 0;
+	char* hello = "pwd >a>z";
+	int idx = 2;
+	int numArrow = 0;
+	int numDest = 0;
+	int oldidx;
 	idx = nextNonSpaceChar(hello, idx);
-	printf("idx %d\n", idx);
+	while(idx < strlen(hello)){
+		if(hello[idx] == '>'){
+			numArrow++;
+			idx = nextNonSpaceChar(hello, idx);
+
+		}
+		else{
+			oldidx = idx;
+			idx = moveToLastCharInWord(hello, idx);
+			if(idx-oldidx > 0){
+				numDest++;
+			}
+			if(idx < strlen(hello)){
+				idx = nextNonSpaceChar(hello, idx);
+			}
+
+		}
+	}
+	printf("numArrow %d\n", numArrow);
+	printf("numDest %d\n", numDest);
 
 	// built in commands
 
