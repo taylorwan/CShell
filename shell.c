@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 // constants
 const char* home = "home";
@@ -33,9 +34,15 @@ typedef enum {true, false} bool;
 
 void printHistory(){
 
+	char out[SIZE];
 	int i = 10;
 	while(i > 0){
 		if(historyCount >= i){
+			// memset(&out[0], 0, sizeof(out));
+			// strcat(out, (char*)historyCount-i);
+			// strcat(out, " ");
+			// strcat(out,(char*) historyArr[historyCount-i]);
+			// strcat(out, '\n');
 			printf("%d %s\n", historyCount-i, historyArr[historyCount-i] );
 		}
 		i--;
@@ -226,16 +233,15 @@ void stripString(char * c) {
 	stripNewline(c);
 }
 
-int nextNonSpaceChar(char * c, int idx){
+int lastChar(char * c){
 
-	idx++;
-	while(idx < strlen(c) && c[idx] == CHAR_SPACE){
-
+	int idx = 0;
+	while(c[idx] != '\0' && c[idx] != '\n'){
 		idx++;
 	}
-
-	return idx;
+	return idx-1;
 }
+
 
 void changeDirectory(char * c) {
 	int result;
@@ -252,7 +258,6 @@ void changeDirectory(char * c) {
 	if (c[i] == 0 || c[i] == '\n') {
 
 		char* homePath = getenv("HOME");
-		puts(homePath);
 		result = chdir(homePath);
 
 		if (result == 0){//chdir worked
@@ -349,162 +354,150 @@ void changeDirectory(char * c) {
 	}
 }
 
+int run(char * input){
+
+	char util[SIZE];
+	int savedSTDOUT = -1;
+	//handle history commands
+	//want to rerun last command
+	if(strncmp(bangbang, input, 2) == 0){
+
+		strcpy(input, historyArr[historyCount-1]);
+	}//want to rerun n command
+	else if(strncmp(bang, input, 1) == 0){
+
+		int len = strlen(input);
+		if(len != 1){
+			int ind = 1;
+			long total = atoi(&input[ind]);
+			if(total < historyCount && total > historyCount -10){
+				strcpy(input, historyArr[total]);
+				puts(input);
+			} else {
+				write(STDERR_FILENO, error_message, strlen(error_message));
+				return -1;
+			}
+		} else {
+			write(STDERR_FILENO, error_message, strlen(error_message));
+			return -1;
+		}
+	}
+
+	addToHistory(input);
+
+
+	//should only be one redirection >
+	strcpy(util, input);
+	char * cmd;
+	char * out = NULL;
+	char * arrow = ">";
+	char * ptr = strtok(util, "> ");
+	bool error = false;
+	int count = 0;
+	int charCount = countChar(input, arrow[0]);
+	while (ptr != NULL & error == false) {
+		if (charCount > 1) {
+			error = true;
+			break;
+		}
+		else if (count == 0) {
+			cmd = ptr;
+		} else if (count == 1) {
+			out = ptr;
+		} else {
+			error = true;
+			break;
+		}
+		ptr = strtok(NULL, "> ");
+		count++;
+	}
+	if (error == true || (charCount+1 != count && charCount > 0)) {
+		write(STDERR_FILENO, error_message, strlen(error_message));
+		return -1;
+	}
+
+	//now have outfile in out
+	//set redirect
+	if(out != NULL){
+		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
+		savedSTDOUT = dup(STDOUT_FILENO);
+		dup2(outfile, STDOUT_FILENO);
+		close(outfile);
+	}
+
+	if (strncmp(cd, input, 2) == 0) {
+		changeDirectory(input);
+	}
+
+	// print working directory
+	else if (strncmp(pwd, input, 3) == 0) {
+		memset(&util[0], 0, sizeof(util));
+		getcwd(util, SIZE);
+		strcat(util, "\n");
+		write(STDOUT_FILENO, (void*) util, sizeof(util));
+
+	}
+
+	else if(strncmp(history, input, 7) == 0){
+		printHistory();
+
+	}
+
+	else if(strncmp(_wait, input, 4) == 0){
+		wait(0);
+	}
+	// exiting
+	else if (strncmp(ciao, input, 4) == 0) {
+		clearStack();
+		clearCopyStack();
+		exit(0);
+	}
+
+	if(savedSTDOUT != -1){
+		dup2(savedSTDOUT, STDOUT_FILENO);
+	}
+	return 0;
+}
 
 int main(int argc, char * argv[]){
 
 	// helper arrays
 	char input[SIZE];
-	char util[SIZE];
+
+	int fk = 0;
 
 	fillPathStack();
-
-	// char* hello = "ab    cd ef gh";
-	// int idx = 0;
-	// idx = nextNonSpaceChar(hello, idx);
-	// printf("idx %d\n", idx);
 
 	// built in commands
 
 	while(1){
-
 
 		printf("CShell> ");
 		fgets(input, SIZE, stdin);
 
 		stripString(input);
 
-		//handle history commands
-		//want to rerun last command
-		if(strncmp(bangbang, input, 2) == 0){
+		int lastcharidx = lastChar(input);
 
-			strcpy(input, historyArr[historyCount-1]);
-		}//want to rerun n command
-		else if(strncmp(bang, input, 1) == 0){
+		if(lastcharidx >= 0){
+			if(input[lastcharidx] == '&'){
+				fk = fork();
+			}
+		}
 
-			int len = strlen(input);
-			if(len != 1){
-				int ind = 1;
-				long total = atoi(&input[ind]);
-				if(total < historyCount && total > historyCount -10){
-					strcpy(input, historyArr[total]);
-					puts(input);
-				} else {
-					write(STDERR_FILENO, error_message, strlen(error_message));
-					continue;
-				}
-			} else {
-				write(STDERR_FILENO, error_message, strlen(error_message));
+		if (fk < 0){ 	//fork failed; exit
+			fprintf(stderr, "fork failed\n");
+			exit(1);
+		}else if (fk == 0){
+
+			int result = run(input);
+			if (result == -1){
 				continue;
 			}
-		}
-
-		addToHistory(input);
-
-		// char* ret = strtok(input, ">");
-		// // puts(ret);
-		// char* redir = strtok(NULL, ">");
-		// if (redir != NULL) {
-		// 	stripSpaces(redir);
-		// 	puts(redir);
-		// 	redir = strtok(redir, " ");
-		// 	puts(redir);
-		// }
-
-		//should only be one redirection >
-		strcpy(util, input);
-		char * cmd;
-		char * out;
-		char * arrow = ">";
-		char * ptr = strtok(util, "> ");
-		bool error = false;
-		int count = 0;
-		int charCount = countChar(input, arrow[0]);
-		while (ptr != NULL & error == false) {
-			// printf("Running while with count %d\n", count);
-			// printf("Util is %s\n", util);
-			if (charCount > 1) {
-				error = true;
-				break;
-			}
-			else if (count == 0) {
-				cmd = ptr;
-				// printf("Command is: %s\n", cmd);
-			} else if (count == 1) {
-				out = ptr;
-				// printf("Output redirected to: %s\n", out);
-			} else {
-				error = true;
-				break;
-			}
-			ptr = strtok(NULL, "> ");
-			count++;
-		}
-		if (error == true || (charCount+1 != count && charCount > 0)) {
-			write(STDERR_FILENO, error_message, strlen(error_message));
-			continue;
-		}
-
-
-		// char* ret = strtok(util, ">");
-		// printf("command it %s\n", ret);	
-		// printf("original line is %s\n", input);
-		// if( strncmp(ret, input, strlen(input)) != 0 ){//means there is a redirection
-		// 	//if second redirect present, then error
-		// 	char* redirDest = strtok(NULL, ">");
-		// 	char* check2rets = strtok(NULL, ">");
-		// 	if(strlen(ret)+strlen(redirDest) + 1 < strlen(input)){
-		// 		write(STDERR_FILENO, error_message, strlen(error_message));
-		// 		continue;
-		// 	}
-		// 	stripSpaces(redirDest);
-		// 	printf("redirection destination is %s\n", redirDest);
-
-		// 	puts(redirDest);
 			
-		// 	// memset(&util[0], 0, sizeof(util));
-		// 	strcpy(util,redirDest);
-		// 	char* splitDest = strtok(util, " ");
-		// 	splitDest = strtok(NULL, " ");
-		// 	printf("splitDest %s\n", splitDest);
-		// 	printf("whole redirection: %s\n", redirDest);
-		// 	printf("length of whole redirection %d\n", (int)strlen(redirDest));
-		// 	printf("split redirection: %s\n", splitDest);
-		// 	printf("length of split redirection %d\n", (int)strlen(splitDest));
-
-		// 	// strlen(splitDest) != strlen(redirDest)
-		// 	// if(strlen(splitDest) != strlen(redirDest)) {
-		// 	// 	write(STDERR_FILENO, error_message, strlen(error_message));
-		// 	// 	continue;
-		// 	// }
-		
-		// }
-
-		if (strncmp(cd, input, 2) == 0) {
-			changeDirectory(input);
-		}
-
-		// print working directory
-		else if (strncmp(pwd, input, 3) == 0) {
-			memset(&util[0], 0, sizeof(util));
-			getcwd(util, SIZE);
-			puts(util);
-		}
-
-		else if(strncmp(history, input, 7) == 0){
-			printHistory();
+		}else{//parent does nothing
 
 		}
-
-		else if(strncmp(_wait, input, 4) == 0){
-			wait(0);
-		}
-		// exiting
-		else if (strncmp(ciao, input, 4) == 0) {
-			clearStack();
-			clearCopyStack();
-			exit(0);
-		}
-
 	}
 
 	return 0;
