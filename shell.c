@@ -87,10 +87,10 @@ void addToHistory(char* c) {
 
 		//if history array is full, remove the first 20 and remake array
 		int i = 0;
-		for (i; i < 20; i++) {
+		for (; i < 20; i++) {
 			free(historyArr[i]);
 		}
-		for (i; i<HISTORYARR_SIZE; i++) {
+		for (; i<HISTORYARR_SIZE; i++) {
 			historyArr[i-20] = historyArr[i];
 		}
 		historyCount = 180;
@@ -183,7 +183,7 @@ void copyStack() {
 	copyStackPointer = stackPointer;
 
 	int i = 0;
-	for (i; i < stackPointer; i++) {
+	for (; i < stackPointer; i++) {
 
 		char* copy = malloc(sizeof(char)* INT_100);
 		strcpy(copy, pathStack[i]);
@@ -198,7 +198,7 @@ void replaceStack() {
 
 	stackPointer = copyStackPointer;
 	int i = 0;
-	for (i; i < stackPointer; i++) {
+	for (; i < stackPointer; i++) {
 		char* copy = malloc(sizeof(char)* INT_100);
 		strcpy(copy, copyPathStack[i]);
 		pathStack[i] = copy;
@@ -211,7 +211,7 @@ void replaceStack() {
  */
 void printStack(char ** c, int sz) {
 	int i = 0;
-	for (i; i< sz; i++) {
+	for (; i< sz; i++) {
 		printf("Stack: %s at %d\n", c[i], i);
 	}
 }
@@ -439,7 +439,7 @@ int countArgs(char * c) {
  */
 void printArray(char ** c, int sz) {
 	int i = 0;
-	for (i; i< sz; i++) {
+	for (; i< sz; i++) {
 		printf("Parsed tokens: %s at %d\n", c[i], i);
 	}
 }
@@ -514,7 +514,7 @@ int changeDirectory(char * c) {
 
 			strcat(path, "/");
 			int p = 0;
-			for (p; p < z; p++) {
+			for (; p < z; p++) {
 				strcat(path, token[p]);
 				strcat(path, "/");
 			}
@@ -525,7 +525,7 @@ int changeDirectory(char * c) {
 				clearStack();
 				int v = 0;
 
-				for (v; v < z; v++) {
+				for (; v < z; v++) {
 					push(token[v]);
 				}
 			} else {
@@ -540,7 +540,7 @@ int changeDirectory(char * c) {
 			bool root = false;
 
 			int f = 0;
-			for (f; f <z; f++) {
+			for (; f <z; f++) {
 				if (strncmp(dotdot, token[f], 2) == 0) {
 					// user tries to traverse past root
 					if (stackPointer == 0) {
@@ -558,7 +558,7 @@ int changeDirectory(char * c) {
 			if (!root) {
 				strcat(path, "/");
 				int p = 0;
-				for (p; p < stackPointer; p++) {
+				for (; p < stackPointer; p++) {
 					strcat(path, pathStack[p]);
 					strcat(path, "/");
 				}
@@ -720,6 +720,7 @@ int parse(char * input) {
 	else if (strcmp(ciao, cmd) == 0) {
 		clearStack();
 		clearCopyStack();
+		exit(0);
 		return FORCE_EXIT;
 	}
 
@@ -735,7 +736,7 @@ int parse(char * input) {
 
 			argv[0] = strtok(util, "> ");
 			int i = 1;
-			for (i; i < argc; i++) {
+			for (; i < argc; i++) {
 				argv[i] = strtok(NULL, "> ");
 			}
 
@@ -793,8 +794,6 @@ int main(int argc, char * argv[]) {
 		int lastcharidx = lastChar(input);
 		if (lastcharidx >= 0) {
 			if (input[lastcharidx] == '&') {
-				stripChar(input, '&');
-				stripEndSpace(input);
 				fk = fork();
 				bg = true;
 			}
