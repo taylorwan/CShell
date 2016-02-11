@@ -237,6 +237,8 @@ void _fillPathStack() {
 /************************
  *	String Helpers
  *
+ *	- findFirst
+ *	- find
  *	- countChar
  *	- shiftString
  *	- stripSpaces
@@ -247,17 +249,54 @@ void _fillPathStack() {
  *	- lastChar
  ************************/
 
+/** find: find the first character in a string
+ * @param c - String to search
+ * @param x - specified character
+ * @return the first index that contains the specified
+ *		   character or -1 if the character is not found
+ */
+int findFirst(char * c, char x) {
+	int i = 0;
+	while (c[i] != CHAR_NULL) {
+		if (c[i] == x) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
+/** find: find the first character in a string, given a
+ * 		  start index
+ * @param c - String to search
+ * @param x - specified character
+ * @param i - starting index
+ * @return the first index after the start index that
+ *		   contains the specified character or -1 if the
+ *		   character is not found
+ */
+int find(char * c, char x, int i) {
+	while (c[i] != CHAR_NULL) {
+		if (c[i] == x) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
 /** countChar: count the number of times a particular character
  * 			   shows up in a string
  * @param c - String to search
+ * @param x - specified character
  * @return number of times the specified character appears
  * 		   in the string
  */
-int countChar(char * c, char charToCount) {
+int countChar(char * c, char x) {
 	int count = 0;
 	int i = 0;
 	while (c[i] != CHAR_NULL) {
-		if (c[i] == charToCount) {
+		if (c[i] == x) {
 			count++;
 		}
 		i++;
@@ -514,29 +553,34 @@ int parse(char * input) {
 	char util[SIZE];
 	int savedSTDOUT = -1;
 
-	/* builtin: bang */
+	/* builtin: '!!' and '!n' */
 
-	// run last command
+	// '!!' run last command
 	if (strncmp(bangbang, input, 2) == 0) {
 		strcpy(input, historyArr[historyCount-1]);
 	}
 
-	//want to rerun n command
+	// '!n' run nth command in history
 	else if (strncmp(bang, input, 1) == 0) {
 
 		int len = strlen(input);
+
+		// if we get more than just '!'
 		if (len != 1) {
 			int ind = 1;
-			long total = atoi(&input[ind]);
-			if (total < historyCount && total > historyCount -10) {
-				strcpy(input, historyArr[total]);
+			long n = atoi(&input[ind]); // # of the entry requested
+
+			// if the entry # is valid and within the last 10
+			if (n < historyCount && n > historyCount-10) {
+				strcpy(input, historyArr[n]);
 				puts(input);
-			} else {
-				return throwError();
 			}
-		} else {
-			return throwError();
+
+			// the entry # is not valid
+			else { return throwError(); }
 		}
+		// we only got a '!'
+		else { return throwError(); }
 	}
 
 	// add last command to history
@@ -546,42 +590,48 @@ int parse(char * input) {
 
 	/* checking for redirection */
 
-	//should only be one redirection >
-	strcpy(util, input);
-	char * cmd;
-	char * out = NULL;
-	char * arrow = ">";
-	char * ptr = strtok(util, "> ");
-	bool error = false;
-	int count = 0;
-	int charCount = countChar(input, arrow[0]);
-	while (ptr != NULL & error == false) {
-		if (charCount > 1) {
-			error = true;
-			break;
-		}
-		else if (count == 0) {
-			cmd = ptr;
-		} else if (count == 1) {
-			out = ptr;
-		} else {
-			error = true;
-			break;
-		}
-		ptr = strtok(NULL, "> ");
-		count++;
-	}
-	if (error == true || (charCount+1 != count && charCount > 0)) {
-		return throwError();
-	}
+	int charCount = countChar(input, '>');
 
-	//now have outfile in out
-	//set redirect
-	if (out != NULL) {
-		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
-		savedSTDOUT = dup(STDOUT_FILENO);
-		dup2(outfile, STDOUT_FILENO);
-		close(outfile);
+	// if there's a redirection
+	if (charCount > 0) {
+
+		strcpy(util, input);
+		char * cmd;
+		char * out = NULL;
+		char * ptr = strtok(util, "> ");
+		int count = 0;
+
+		while (ptr != NULL) {
+
+			// more than one '>'
+			if (charCount > 1) { return throwError(); }
+			// first argument
+			else if (count == 0) { cmd = ptr; }
+			// second argument
+			else if (count == 1) { out = ptr; }
+			// more than two args
+			else { return throwError(); }
+
+			// increment
+			ptr = strtok(NULL, "> ");
+			count++;
+		}
+
+		// check for the correct # of matched arguments
+		// or the '>' comes after the two args
+		if ((charCount+1 != count) ||
+			(strlen(out) + strlen(cmd) < findFirst(input, '>'))) {
+			return throwError();
+		}
+
+		// set redirect for outfile
+		if (out != NULL) {
+			printf("not nulllllll nopeee\n");
+			int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
+			savedSTDOUT = dup(STDOUT_FILENO);
+			dup2(outfile, STDOUT_FILENO);
+			close(outfile);
+		}
 	}
 
 
