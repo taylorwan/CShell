@@ -730,32 +730,7 @@ int parse(char * input) {
 	else if (strcmp(ciao, cmd) == 0) {
 		clearStack();
 		clearCopyStack();
-		exit(0);
 		return FORCE_EXIT;
-	}
-
-	// no cases matched! check with bash
-	else {
-		int spoon = fork();
-
-		// child process: runs bash
-		if (spoon == 0) {
-			strcpy(util, input);
-			int argc = 4;
-			char * argv[argc];
-
-			argv[0] = strtok(util, "> ");
-			int i = 1;
-			for (; i < argc; i++) {
-				argv[i] = strtok(NULL, "> ");
-			}
-
-			int res = execvp(argv[0], argv);
-		}
-		//parent does nothing
-		else {
-			wait(NULL);
-		}
 	}
 
 	// reset bools
@@ -763,7 +738,6 @@ int parse(char * input) {
 		dup2(savedSTDOUT, STDOUT_FILENO);
 		savedSTDOUT = -1;
 	}
-
 	return SUCCESS;
 }
 
@@ -773,7 +747,6 @@ int parse(char * input) {
  * @param c - user input (beginning with "cd ")
  */
 int main(int argc, char * argv[]) {
-
 	char input[SIZE];
 	int fk = 0;
 	fillPathStack();
@@ -788,7 +761,6 @@ int main(int argc, char * argv[]) {
 			return throwError();
 		}
 	}
-
 	// loop until user exits
 	while (1) {
 
