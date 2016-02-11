@@ -666,7 +666,11 @@ int parse(char * input) {
 			else if (args == 0) {}
 			// second argument
 			else if (args == 1) { out = ptr; }
-			// more than two args
+			// if third argument is an '&', keep going
+			else if (args == 2 && ptr != '&') {
+				return throwError();
+			}
+			// more than two args, and third isn't an '&'
 			else { return throwError(); }
 
 			// increment
