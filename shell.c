@@ -348,6 +348,8 @@ void stripEndSpace(char * c) {
 		char cur = c[len-1];
 		if (cur == ' ' || cur == '\n')
 			c[len-1] = '\0';
+		else
+			break;
 		len--;
 	}
 }
@@ -618,7 +620,9 @@ int parse(char * input) {
 		while (ptr != NULL) {
 			// more than one '>'
 			if (arrCount > 1) { return throwError(); }
-			// second argument = outfile
+			// first argument
+			else if (args == 0) { cmd = ptr; }
+			// second argument
 			else if (args == 1) { out = ptr; }
 			// more than two args
 			else { return throwError(); }
@@ -636,12 +640,18 @@ int parse(char * input) {
 		}
 
 		// set redirect for outfile
+		// if (out != NULL) {
 		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
+		// printf("outfile %d\n", outfile );
 		savedSTDOUT = dup(STDOUT_FILENO);
 		dup2(outfile, STDOUT_FILENO);
 		close(outfile);
+		// }
 	}
 
+	// recopy util
+	strcpy(util, input);
+	cmd = strtok(util, " ");
 
 	/* remaining builtins */
 
