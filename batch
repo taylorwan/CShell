@@ -1,0 +1,13 @@
+pwd
+cd..
+pwd
+cd
+pwd
+history
+!!
+!5
+pwd > test
+cd &
+pwd &
+wait
+exit
