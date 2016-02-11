@@ -95,11 +95,13 @@ void _addToHistory(char* c) {
 
 	}
 
-	if (historyCount < HISTORYARR_SIZE) {
-		char *util = malloc(sizeof(char)* INT_100);
-		strcpy(util, c);
-		historyArr[historyCount] = util;
-		historyCount++;
+	if (strncmp(c, "\n", 1) != 0) {
+		if (historyCount < HISTORYARR_SIZE) {
+			char *util = malloc(sizeof(char)* INT_100);
+			strcpy(util, c);
+			historyArr[historyCount] = util;
+			historyCount++;
+		}
 	}
 }
 
@@ -348,6 +350,8 @@ void stripEndSpace(char * c) {
 		char cur = c[len-1];
 		if (cur == ' ' || cur == '\n')
 			c[len-1] = '\0';
+		else
+			break;
 		len--;
 	}
 }
@@ -617,7 +621,9 @@ int parse(char * input) {
 		while (ptr != NULL) {
 			// more than one '>'
 			if (arrCount > 1) { return throwError(); }
-			// second argument = outfile
+			// first argument
+			else if (args == 0) { cmd = ptr; }
+			// second argument
 			else if (args == 1) { out = ptr; }
 			// more than two args
 			else { return throwError(); }
@@ -641,6 +647,9 @@ int parse(char * input) {
 		close(outfile);
 	}
 
+	// recopy util
+	strcpy(util, input);
+	cmd = strtok(util, " ");
 
 	/* remaining builtins */
 
@@ -674,6 +683,7 @@ int parse(char * input) {
 		exit(0);
 	}
 
+	// if STDOUT was redirected, reset it back to screen
 	if (savedSTDOUT != -1) {
 		dup2(savedSTDOUT, STDOUT_FILENO);
 	}
