@@ -561,25 +561,31 @@ void changeDirectory(char * c) {
  */
 int parse(char * input) {
 
+	// helpers
 	char util[SIZE];
 	int savedSTDOUT = -1;
+
+	// grab command
+	strcpy(util, input);
+	char * ptr = strtok(util, "> ");
+	char * cmd = ptr;
 
 	/* builtin: '!!' and '!n' */
 
 	// '!!' run last command
-	if (strncmp(bangbang, input, 2) == 0) {
+	if (strncmp(bangbang, cmd, 2) == 0) {
 		strcpy(input, historyArr[historyCount-1]);
 	}
 
 	// '!n' run nth command in history
-	else if (strncmp(bang, input, 1) == 0) {
+	else if (strncmp(bang, cmd, 1) == 0) {
 
-		int len = strlen(input);
+		int len = strlen(cmd);
 
 		// if we get more than just '!'
 		if (len != 1) {
 			int ind = 1;
-			long n = atoi(&input[ind]); // # of the entry requested
+			long n = atoi(&cmd[ind]); // # of the entry requested
 
 			// if the entry # is valid and within the last 10
 			if (n < historyCount && n > historyCount-10) {
@@ -598,27 +604,20 @@ int parse(char * input) {
 	_addToHistory(input);
 
 
-
 	/* checking for redirection */
 
 	int arrCount = countChar(input, '>');
 
 	// if there's a redirection
 	if (arrCount > 0) {
-
-		strcpy(util, input);
-		char * cmd;
 		char * out = NULL;
-		char * ptr = strtok(util, "> ");
 		int args = 0;
 
+		// while there are args
 		while (ptr != NULL) {
-
 			// more than one '>'
 			if (arrCount > 1) { return throwError(); }
-			// first argument
-			else if (args == 0) { cmd = ptr; }
-			// second argument
+			// second argument = outfile
 			else if (args == 1) { out = ptr; }
 			// more than two args
 			else { return throwError(); }
@@ -646,12 +645,12 @@ int parse(char * input) {
 	/* remaining builtins */
 
 	// cd
-	if (strncmp(cd, input, 2) == 0) {
+	if (strcmp(cd, cmd) == 0) {
 		changeDirectory(input);
 	}
 
 	// print working directory
-	else if (strncmp(pwd, input, 3) == 0) {
+	else if (strcmp(pwd, cmd) == 0) {
 		memset(&util[0], 0, sizeof(util));
 		getcwd(util, SIZE);
 		strcat(util, "\n");
@@ -659,17 +658,17 @@ int parse(char * input) {
 	}
 
 	// history
-	else if (strncmp(history, input, 7) == 0) {
+	else if (strcmp(history, cmd) == 0) {
 		printHistory();
 	}
 
 	// wait
-	else if (strncmp(_wait, input, 4) == 0) {
+	else if (strcmp(_wait, cmd) == 0) {
 		wait(0);
 	}
 
 	// exit
-	else if (strncmp(ciao, input, 4) == 0) {
+	else if (strcmp(ciao, cmd) == 0) {
 		_clearStack();
 		_clearCopyStack();
 		exit(0);
