@@ -497,7 +497,7 @@ void changeDirectory(char * c) {
 					_push(token[v]);
 				}
 			} else {
-				printf("The specified path does not exist\n");
+				printf("some error\n");
 			}
 
 
@@ -531,14 +531,13 @@ void changeDirectory(char * c) {
 
 				result = chdir(path);
 				if (result != 0) {
-					printf("The path specified does not exist\n");
 					_replaceStack();
-
+					printf("some error\n");
 				}
 			} else {
 			//user goes past root, in command, so reload stack
-				printf("Cannot move above root\n");
 				_replaceStack(); //return stack to previous state, since user messed up
+				printf("some error\n");
 			}
 		}
 	}
@@ -684,13 +683,27 @@ int main(int argc, char * argv[]) {
 	char input[SIZE];
 	int fk = 0;
 	_fillPathStack();
+	int OopsOrNah = -1;
 
+	if(argc == 2){
+		OopsOrNah = open(argv[1], O_RDWR);
+		if( OopsOrNah >= 0){
+			dup2(OopsOrNah, STDIN_FILENO);
+		} else {
+			return throwError();
+		}
+	}
 	// loop until user exits
 	while (1) {
 
-		printf("CShell> ");
+		if (OopsOrNah < 0){
+			char* prompt = "CShell> ";
+			write(STDOUT_FILENO, (void*) prompt, sizeof(prompt)-1);
+		}
 		fgets(input, SIZE, stdin);
 		stripString(input);
+
+		if(OopsOrNah >=0){puts(input);}
 
 		int lastcharidx = lastChar(input);
 		if (lastcharidx >= 0) {
