@@ -95,11 +95,13 @@ void _addToHistory(char* c) {
 
 	}
 
-	if (historyCount < HISTORYARR_SIZE) {
-		char *util = malloc(sizeof(char)* INT_100);
-		strcpy(util, c);
-		historyArr[historyCount] = util;
-		historyCount++;
+	if (strncmp(c, "\n", 1) != 0) {
+		if (historyCount < HISTORYARR_SIZE) {
+			char *util = malloc(sizeof(char)* INT_100);
+			strcpy(util, c);
+			historyArr[historyCount] = util;
+			historyCount++;
+		}
 	}
 }
 
@@ -640,13 +642,10 @@ int parse(char * input) {
 		}
 
 		// set redirect for outfile
-		// if (out != NULL) {
 		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
-		// printf("outfile %d\n", outfile );
 		savedSTDOUT = dup(STDOUT_FILENO);
 		dup2(outfile, STDOUT_FILENO);
 		close(outfile);
-		// }
 	}
 
 	// recopy util
@@ -685,6 +684,7 @@ int parse(char * input) {
 		exit(0);
 	}
 
+	// if STDOUT was redirected, reset it back to screen
 	if (savedSTDOUT != -1) {
 		dup2(savedSTDOUT, STDOUT_FILENO);
 	}
