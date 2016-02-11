@@ -71,13 +71,21 @@ typedef enum {true, false} bool;
 /** printHistory: prints the last 10 items in history
  */
 void printHistory() {
+	// char util[SIZE];
+	// char * toConcat = NULL;
 	int i = 10;
 	while (i > 0) {
 		if (historyCount >= i) {
 			printf("%d %s\n", historyCount-i, historyArr[historyCount-i]);
+			// toConcat = historyCount-i;
+			// strcat(util, toConcat);
+			// strcat(util, " ");
+			// toConcat = historyArr[historyCount-i];
+			// strcat(util, toConcat);
 		}
 		i--;
 	}
+	// write(STDOUT_FILENO, (void*) util, sizeof(util));
 }
 
 /** addToHistory: add an item to history
@@ -341,7 +349,6 @@ void stripSpaces(char * c) {
  */
 void stripEndOfLine(char * c) {
 	int len = strlen(c);
-	printf("length is: %d\n",(int)strlen(c));
 	c[len-1] = '\0';
 }
 
@@ -629,7 +636,7 @@ int parse(char * input) {
 			// more than one '>'
 			if (arrCount > 1) { return throwError(); }
 			// first argument
-			else if (args == 0) { cmd = ptr; }
+			else if (args == 0) {}
 			// second argument
 			else if (args == 1) { out = ptr; }
 			// more than two args
@@ -665,7 +672,7 @@ int parse(char * input) {
 		changeDirectory(input);
 	}
 
-	// print working directory
+	// print working directory pwd
 	else if (strcmp(pwd, cmd) == 0) {
 		memset(&util[0], 0, sizeof(util));
 		getcwd(util, SIZE);
