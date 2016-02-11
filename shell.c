@@ -453,6 +453,14 @@ int throwError() {
 	return ERROR_CODE;
 }
 
+/** _throwError: throw an error
+ * @param msg - custom error message to be printed
+ * @return ERROR_CODE (should be -1)
+ */
+int _throwError(char * msg) {
+	write(STDERR_FILENO, msg, strlen(msg));
+	return ERROR_CODE;
+}
 
 /************************
  *	Command Helpers
@@ -469,6 +477,8 @@ int changeDirectory(char * c) {
 	int result;
 	char path[SIZE];
 	memset(&path[0], 0, sizeof(path));
+	stripChar(c, '&');
+	stripEndSpace(c);
 
 	int i = 2; //jump to beginning of input path
 	while (c[i] == CHAR_SPACE) {
@@ -794,6 +804,8 @@ int main(int argc, char * argv[]) {
 		int lastcharidx = lastChar(input);
 		if (lastcharidx >= 0) {
 			if (input[lastcharidx] == '&') {
+				stripChar(input, '&');
+				stripEndSpace(input);
 				fk = fork();
 				bg = true;
 			}

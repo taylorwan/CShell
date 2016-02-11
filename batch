@@ -1,14 +1,14 @@
 pwd
-cd..
+cd..     
 pwd
 cd
 pwd
 history
-!!
-!5
+    !!
+!5 &
 pwd > test.txt
 history > test.txt
 cd &
 pwd &
 wait
-exit
+    exit
