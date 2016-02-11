@@ -767,6 +767,7 @@ int main(int argc, char * argv[]) {
 	int fk = 0;
 	fillPathStack();
 	int OopsOrNah = -1;
+	bool bg = false;
 
 	if(argc == 2){
 		OopsOrNah = open(argv[1], O_RDWR);
@@ -795,6 +796,7 @@ int main(int argc, char * argv[]) {
 				stripChar(input, '&');
 				stripEndSpace(input);
 				fk = fork();
+				bg = true;
 			}
 		}
 
@@ -806,7 +808,14 @@ int main(int argc, char * argv[]) {
 
 		// child process: runs bash
 		else if (fk == 0) {
+
 			int result = parse(input);
+			if (bg) {
+				strcat(input, " &");
+				bg = false;
+				result = parse(input);
+			}
+
 			if (result == ERROR_CODE) {
 				continue;
 			} if (result == FORCE_EXIT) {
