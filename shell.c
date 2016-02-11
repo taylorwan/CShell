@@ -19,16 +19,15 @@
 // builtins
 const char* home = "home";
 const char* dotdot = "..";
-const char *ciao = "exit";
-const char *cd = "cd";
-const char *pwd = "pwd";
-const char *_wait = "wait";
+const char* ciao = "exit";
+const char* cd = "cd";
+const char* pwd = "pwd";
+const char* _wait = "wait";
 const char* history = "history";
 const char* bangbang = "!!";
 const char* bang = "!";
 
 // error
-const char error_message[30] = "An error has occurred\n";
 const int ERROR_CODE = -1;
 
 // sizing
@@ -40,7 +39,7 @@ const int CHAR_SPACE = 32;
 const int CHAR_NEWLINE = 13;
 const int CHAR_NULL = 0;
 
-// constants for stack
+// stack
 const int PATHSTACK_SIZE = 50;
 char* pathStack[50];
 char* copyPathStack[50];
@@ -52,7 +51,7 @@ char* historyArr[200];
 const int HISTORYARR_SIZE = 200;
 int historyCount = 0;
 
-// true/false
+// boolean
 typedef enum {true, false} bool;
 
 
@@ -68,9 +67,6 @@ typedef enum {true, false} bool;
 /** printHistory: prints the last 10 items in history
  */
 void printHistory() {
-
-	char out[SIZE];
-
 	int i = 10;
 	while (i > 0) {
 		if (historyCount >= i) {
@@ -237,27 +233,67 @@ void _fillPathStack() {
 /************************
  *	String Helpers
  *
+ *	- findFirst
+ *	- find
  *	- countChar
  *	- shiftString
  *	- stripSpaces
  *	- stripEndOfLine
+ *	- stripEndSpace
  *	- stripNewline
  *	- stripString
  *	- nextNonSpaceChar
  *	- lastChar
  ************************/
 
+/** find: find the first character in a string
+ * @param c - String to search
+ * @param x - specified character
+ * @return the first index that contains the specified
+ *		   character or -1 if the character is not found
+ */
+int findFirst(char * c, char x) {
+	int i = 0;
+	while (c[i] != CHAR_NULL) {
+		if (c[i] == x) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
+/** find: find the first character in a string, given a
+ * 		  start index
+ * @param c - String to search
+ * @param x - specified character
+ * @param i - starting index
+ * @return the first index after the start index that
+ *		   contains the specified character or -1 if the
+ *		   character is not found
+ */
+int find(char * c, char x, int i) {
+	while (c[i] != CHAR_NULL) {
+		if (c[i] == x) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
 /** countChar: count the number of times a particular character
  * 			   shows up in a string
  * @param c - String to search
+ * @param x - specified character
  * @return number of times the specified character appears
  * 		   in the string
  */
-int countChar(char * c, char charToCount) {
+int countChar(char * c, char x) {
 	int count = 0;
 	int i = 0;
 	while (c[i] != CHAR_NULL) {
-		if (c[i] == charToCount) {
+		if (c[i] == x) {
 			count++;
 		}
 		i++;
@@ -303,6 +339,19 @@ void stripEndOfLine(char * c) {
 	c[len-1] = '\0';
 }
 
+/** stripEndSpace: removes whitespace from the end of a string
+ * @param c - String to strip
+ */
+void stripEndSpace(char * c) {
+	int len = strlen(c);
+	while(len > 1) {
+		char cur = c[len-1];
+		if (cur == ' ' || cur == '\n')
+			c[len-1] = '\0';
+		len--;
+	}
+}
+
 /** stripNewline: removes all new line characters from a string
  * @param c - String to strip
  */
@@ -322,7 +371,7 @@ void stripNewline(char * c) {
  */
 void stripString(char * c) {
 	stripSpaces(c);
-	stripNewline(c);
+	stripEndSpace(c);
 }
 
 /** nextNonSpaceChar: return the next non-space character
@@ -378,6 +427,8 @@ void _printArray(char ** c, int sz) {
  * @return ERROR_CODE (should be -1)
  */
 int throwError() {
+
+	char * error_message = "An error has occurred\n";
 	write(STDERR_FILENO, error_message, strlen(error_message));
 	return ERROR_CODE;
 }
@@ -511,73 +562,80 @@ void changeDirectory(char * c) {
  */
 int parse(char * input) {
 
+	// helpers
 	char util[SIZE];
 	int savedSTDOUT = -1;
 
-	/* builtin: bang */
+	// grab command
+	strcpy(util, input);
+	char * ptr = strtok(util, "> ");
+	char * cmd = ptr;
 
-	// run last command
-	if (strncmp(bangbang, input, 2) == 0) {
+	/* builtin: '!!' and '!n' */
+
+	// '!!' run last command
+	if (strncmp(bangbang, cmd, 2) == 0) {
 		strcpy(input, historyArr[historyCount-1]);
 	}
 
-	//want to rerun n command
-	else if (strncmp(bang, input, 1) == 0) {
+	// '!n' run nth command in history
+	else if (strncmp(bang, cmd, 1) == 0) {
 
-		int len = strlen(input);
+		int len = strlen(cmd);
+
+		// if we get more than just '!'
 		if (len != 1) {
 			int ind = 1;
-			long total = atoi(&input[ind]);
-			if (total < historyCount && total > historyCount -10) {
-				strcpy(input, historyArr[total]);
+			long n = atoi(&cmd[ind]); // # of the entry requested
+
+			// if the entry # is valid and within the last 10
+			if (n < historyCount && n > historyCount-10) {
+				strcpy(input, historyArr[n]);
 				puts(input);
-			} else {
-				return throwError();
 			}
-		} else {
-			return throwError();
+
+			// the entry # is not valid
+			else { return throwError(); }
 		}
+		// we only got a '!'
+		else { return throwError(); }
 	}
 
 	// add last command to history
 	_addToHistory(input);
 
 
-
 	/* checking for redirection */
 
-	//should only be one redirection >
-	strcpy(util, input);
-	char * cmd;
-	char * out = NULL;
-	char * arrow = ">";
-	char * ptr = strtok(util, "> ");
-	bool error = false;
-	int count = 0;
-	int charCount = countChar(input, arrow[0]);
-	while (ptr != NULL & error == false) {
-		if (charCount > 1) {
-			error = true;
-			break;
-		}
-		else if (count == 0) {
-			cmd = ptr;
-		} else if (count == 1) {
-			out = ptr;
-		} else {
-			error = true;
-			break;
-		}
-		ptr = strtok(NULL, "> ");
-		count++;
-	}
-	if (error == true || (charCount+1 != count && charCount > 0)) {
-		return throwError();
-	}
+	int arrCount = countChar(input, '>');
 
-	//now have outfile in out
-	//set redirect
-	if (out != NULL) {
+	// if there's a redirection
+	if (arrCount > 0) {
+		char * out = NULL;
+		int args = 0;
+
+		// while there are args
+		while (ptr != NULL) {
+			// more than one '>'
+			if (arrCount > 1) { return throwError(); }
+			// second argument = outfile
+			else if (args == 1) { out = ptr; }
+			// more than two args
+			else { return throwError(); }
+
+			// increment
+			ptr = strtok(NULL, "> ");
+			args++;
+		}
+
+		// check for the correct # of matched arguments
+		// or the '>' comes after the two args
+		if ((arrCount+1 != args) ||
+			(strlen(out) + strlen(cmd) < findFirst(input, '>'))) {
+			return throwError();
+		}
+
+		// set redirect for outfile
 		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
 		savedSTDOUT = dup(STDOUT_FILENO);
 		dup2(outfile, STDOUT_FILENO);
@@ -588,12 +646,12 @@ int parse(char * input) {
 	/* remaining builtins */
 
 	// cd
-	if (strncmp(cd, input, 2) == 0) {
+	if (strcmp(cd, cmd) == 0) {
 		changeDirectory(input);
 	}
 
 	// print working directory
-	else if (strncmp(pwd, input, 3) == 0) {
+	else if (strcmp(pwd, cmd) == 0) {
 		memset(&util[0], 0, sizeof(util));
 		getcwd(util, SIZE);
 		strcat(util, "\n");
@@ -601,17 +659,17 @@ int parse(char * input) {
 	}
 
 	// history
-	else if (strncmp(history, input, 7) == 0) {
+	else if (strcmp(history, cmd) == 0) {
 		printHistory();
 	}
 
 	// wait
-	else if (strncmp(_wait, input, 4) == 0) {
+	else if (strcmp(_wait, cmd) == 0) {
 		wait(0);
 	}
 
 	// exit
-	else if (strncmp(ciao, input, 4) == 0) {
+	else if (strcmp(ciao, cmd) == 0) {
 		_clearStack();
 		_clearCopyStack();
 		exit(0);
@@ -657,7 +715,6 @@ int main(int argc, char * argv[]) {
 
 		// child process: runs bash
 		else if (fk == 0) {
-
 			int result = parse(input);
 			if (result == ERROR_CODE) {
 				continue;
