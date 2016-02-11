@@ -666,11 +666,7 @@ int parse(char * input) {
 			else if (args == 0) {}
 			// second argument
 			else if (args == 1) { out = ptr; }
-			// if third argument is an '&', keep going
-			else if (args == 2 && ptr != '&') {
-				return throwError();
-			}
-			// more than two args, and third isn't an '&'
+			// more than two args
 			else { return throwError(); }
 
 			// increment
@@ -813,12 +809,12 @@ int main(int argc, char * argv[]) {
 		// child process: runs bash
 		else if (fk == 0) {
 
-			int result = parse(input);
 			if (bg) {
 				strcat(input, " &");
 				bg = false;
-				result = parse(input);
 			}
+			int result = parse(input);
+			
 
 			if (result == ERROR_CODE) {
 				continue;
