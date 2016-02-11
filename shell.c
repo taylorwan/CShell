@@ -30,6 +30,10 @@ const char* bang = "!";
 // error
 const int ERROR_CODE = -1;
 
+// exiting
+const int FORCE_EXIT = -2;
+const int SUCCESS = 0;
+
 // sizing
 const int SIZE = 512;
 const int INT_100 = 100;
@@ -60,8 +64,8 @@ typedef enum {true, false} bool;
  *	History Helpers
  *
  *	- printHistory
- *	- _addToHistory
- *	- _clearHistory
+ *	- addToHistory
+ *	- clearHistory
  ************************/
 
 /** printHistory: prints the last 10 items in history
@@ -76,10 +80,10 @@ void printHistory() {
 	}
 }
 
-/** _addToHistory: add an item to history
+/** addToHistory: add an item to history
  * @param c - command to add
  */
-void _addToHistory(char* c) {
+void addToHistory(char* c) {
 
 	if (historyCount == HISTORYARR_SIZE) {
 
@@ -105,9 +109,9 @@ void _addToHistory(char* c) {
 	}
 }
 
-/** _clearHistory: clear the history
+/** clearHistory: clear the history
  */
-void _clearHistory() {
+void clearHistory() {
 
 	while (historyCount != 0) {
 		free(historyArr[historyCount-1]);
@@ -120,20 +124,20 @@ void _clearHistory() {
 /************************
  *	Stack Helpers
  *
- *	- _push
- *	- _pop
- *	- _clearStack
- *	- _clearCopyStack
- *	- _copyStack
- *	- _replaceStack
- *	- _printStack
- *	- _fillPathStack
+ *	- push
+ *	- pop
+ *	- clearStack
+ *	- clearCopyStack
+ *	- copyStack
+ *	- replaceStack
+ *	- printStack
+ *	- fillPathStack
  ************************/
 
-/** _push: push to stack
+/** push: push to stack
  * @param c - item to push
  */
-void _push(char* c) {
+void push(char* c) {
 	if (stackPointer < PATHSTACK_SIZE) {
 
 		char *util = malloc(sizeof(char)* INT_100);
@@ -143,10 +147,10 @@ void _push(char* c) {
 	}
 }
 
-/** _pop: clear the history
+/** pop: clear the history
  * @return - the item removed
  */
-char * _pop() {
+char * pop() {
 	if (stackPointer-1 >= 0) {
 		char * val = pathStack[stackPointer-1];
 		free(pathStack[stackPointer-1]);
@@ -157,17 +161,17 @@ char * _pop() {
 	exit(10);
 }
 
-/** _clearStack: clear the stack
+/** clearStack: clear the stack
  */
-void _clearStack() {
+void clearStack() {
 	while (stackPointer != 0) {
-		_pop();
+		pop();
 	}
 }
 
-/** _clearCopyStack: clear the copy stack
+/** clearCopyStack: clear the copy stack
  */
-void _clearCopyStack() {
+void clearCopyStack() {
 	while (copyStackPointer != 0) {
 		free(copyPathStack[copyStackPointer-1]);
 		copyStackPointer--;
@@ -175,9 +179,9 @@ void _clearCopyStack() {
 	}
 }
 
-/** _copyStack: copy the stack to our copy stack
+/** copyStack: copy the stack to our copy stack
  */
-void _copyStack() {
+void copyStack() {
 	copyStackPointer = stackPointer;
 
 	int i = 0;
@@ -189,10 +193,10 @@ void _copyStack() {
 	}
 }
 
-/** _replaceStack: replace the stack with our copy stack
+/** replaceStack: replace the stack with our copy stack
  */
-void _replaceStack() {
-	_clearStack();
+void replaceStack() {
+	clearStack();
 
 	stackPointer = copyStackPointer;
 	int i = 0;
@@ -203,29 +207,29 @@ void _replaceStack() {
 	}
 }
 
-/** _printStack: print a stack
+/** printStack: print a stack
  * @param c - the stack (an array of strings) to print
  * @param sz - the size of the stack (array) to print
  */
-void _printStack(char ** c, int sz) {
+void printStack(char ** c, int sz) {
 	int i = 0;
 	for (i; i< sz; i++) {
 		printf("Stack: %s at %d\n", c[i], i);
 	}
 }
 
-/** _fillPathStack: populate our stack with the current path
+/** fillPathStack: populate our stack with the current path
  * @param c - the array to print
  * @param sz - the size of the array to print
  */
-void _fillPathStack() {
+void fillPathStack() {
 	char util[SIZE];
 	getcwd(util, SIZE);
 
 	char* token;
 	token = strtok(util, "/");
 	while (token != NULL) {
-		_push(token);
+		push(token);
 		token = strtok(NULL, "/");
 	}
 }
@@ -242,7 +246,7 @@ void _fillPathStack() {
  *	- stripSpaces
  *	- stripEndOfLine
  *	- stripEndSpace
- *	- stripNewline
+ *	- stripChar
  *	- stripString
  *	- nextNonSpaceChar
  *	- lastChar
@@ -356,13 +360,13 @@ void stripEndSpace(char * c) {
 	}
 }
 
-/** stripNewline: removes all new line characters from a string
+/** stripChar: removes all new line characters from a string
  * @param c - String to strip
  */
-void stripNewline(char * c) {
+void stripChar(char * c, char x) {
 	int i = 0;
 	while (c[i] != CHAR_NULL) {
-		if (c[i] == '\n') {
+		if (c[i] == x) {
 			c[i] = '\0';
 		}
 		i++;
@@ -412,15 +416,15 @@ int lastChar(char * c) {
 /************************
  *	Other Helpers
  *
- *	- _printArray
+ *	- printArray
  *	- throwError
  ************************/
 
-/** _printArray: print an array of strings
+/** printArray: print an array of strings
  * @param c - the array to print
  * @param sz - the size of the array to print
  */
-void _printArray(char ** c, int sz) {
+void printArray(char ** c, int sz) {
 	int i = 0;
 	for (i; i< sz; i++) {
 		printf("Parsed tokens: %s at %d\n", c[i], i);
@@ -447,8 +451,9 @@ int throwError() {
 
 /** changeDirectory: handle the change directory command
  * @param c - user input (beginning with "cd ")
+ * @return ERROR_CODE if an error is thrown
  */
-void changeDirectory(char * c) {
+int changeDirectory(char * c) {
 	int result;
 	char path[SIZE];
 	memset(&path[0], 0, sizeof(path));
@@ -466,13 +471,13 @@ void changeDirectory(char * c) {
 
 		if (result == 0) {//chdir worked
 
-			_clearStack();
+			clearStack();
 			char* homeTokens;
 			homeTokens = strtok(homePath, "/");
 
 			//get tokens based on /
 			while (homeTokens != NULL) {
-				_push(homeTokens);
+				push(homeTokens);
 				homeTokens = strtok(NULL, "/");
 			}
 		}
@@ -481,7 +486,7 @@ void changeDirectory(char * c) {
 	//otherwise user gave more info about directory traversal
 	else {
 
-		stripNewline(c); //remove newline
+		stripChar(c, '\n'); //remove newline
 		strtok(c, " "); //skip to path characters
 		char * token[SIZE];
 		int z = 0;
@@ -506,20 +511,20 @@ void changeDirectory(char * c) {
 			result = chdir(path);
 			if (result == 0) {
 
-				_clearStack();
+				clearStack();
 				int v = 0;
 
 				for (v; v < z; v++) {
-					_push(token[v]);
+					push(token[v]);
 				}
 			} else {
-				printf("some error\n");
+				return throwError();
 			}
 
 
 		} else {
 		//means a relative path
-			_copyStack(); //save the stack state of path
+			copyStack(); //save the stack state of path
 			bool root = false;
 
 			int f = 0;
@@ -529,10 +534,10 @@ void changeDirectory(char * c) {
 						root = true; //user tries to traverse past root
 						break;
 					} else {
-						_pop();
+						pop();
 					}
 				} else {
-					_push(token[f]);
+					push(token[f]);
 				}
 			}
 
@@ -547,16 +552,18 @@ void changeDirectory(char * c) {
 
 				result = chdir(path);
 				if (result != 0) {
-					_replaceStack();
-					printf("some error\n");
+					replaceStack();
+					return throwError();
 				}
 			} else {
 			//user goes past root, in command, so reload stack
-				_replaceStack(); //return stack to previous state, since user messed up
-				printf("some error\n");
+				replaceStack(); //return stack to previous state, since user messed up
+				return throwError();
 			}
 		}
 	}
+
+	return SUCCESS;
 }
 
 /** parse: parse user input and call the appropriate commands
@@ -605,7 +612,7 @@ int parse(char * input) {
 	}
 
 	// add last command to history
-	_addToHistory(input);
+	addToHistory(input);
 
 
 	/* checking for redirection */
@@ -678,17 +685,18 @@ int parse(char * input) {
 
 	// exit
 	else if (strcmp(ciao, cmd) == 0) {
-		_clearStack();
-		_clearCopyStack();
-		exit(0);
+		clearStack();
+		clearCopyStack();
+		return FORCE_EXIT;
 	}
 
 	// if STDOUT was redirected, reset it back to screen
 	if (savedSTDOUT != -1) {
 		dup2(savedSTDOUT, STDOUT_FILENO);
+		savedSTDOUT = -1;
 	}
 
-	return 0;
+	return SUCCESS;
 }
 
 
@@ -700,7 +708,7 @@ int main(int argc, char * argv[]) {
 
 	char input[SIZE];
 	int fk = 0;
-	_fillPathStack();
+	fillPathStack();
 	int OopsOrNah = -1;
 
 	if(argc == 2){
@@ -726,6 +734,8 @@ int main(int argc, char * argv[]) {
 		int lastcharidx = lastChar(input);
 		if (lastcharidx >= 0) {
 			if (input[lastcharidx] == '&') {
+				stripChar(input, '&');
+				stripEndSpace(input);
 				fk = fork();
 			}
 		}
@@ -741,12 +751,17 @@ int main(int argc, char * argv[]) {
 			int result = parse(input);
 			if (result == ERROR_CODE) {
 				continue;
-			}
+			} if (result == FORCE_EXIT) {
+				return SUCCESS;
+			} 
 		}
 
 		//parent does nothing
-		else {}
+		else {
+			wait(NULL);
+			exit(0);
+		}
 	}
 
-	return 0;
+	return SUCCESS;
 }
