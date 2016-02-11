@@ -6,7 +6,8 @@ pwd
 history
 !!
 !5
-pwd > test
+pwd > test.txt
+history > test.txt
 cd &
 pwd &
 wait

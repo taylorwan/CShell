@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
 
 
@@ -55,9 +56,6 @@ char* historyArr[200];
 const int HISTORYARR_SIZE = 200;
 int historyCount = 0;
 
-// boolean
-typedef enum {true, false} bool;
-
 
 
 /************************
@@ -71,21 +69,13 @@ typedef enum {true, false} bool;
 /** printHistory: prints the last 10 items in history
  */
 void printHistory() {
-	// char util[SIZE];
-	// char * toConcat = NULL;
 	int i = 10;
 	while (i > 0) {
 		if (historyCount >= i) {
 			printf("%d %s\n", historyCount-i, historyArr[historyCount-i]);
-			// toConcat = historyCount-i;
-			// strcat(util, toConcat);
-			// strcat(util, " ");
-			// toConcat = historyArr[historyCount-i];
-			// strcat(util, toConcat);
 		}
 		i--;
 	}
-	// write(STDOUT_FILENO, (void*) util, sizeof(util));
 }
 
 /** addToHistory: add an item to history
@@ -258,6 +248,7 @@ void fillPathStack() {
  *	- stripString
  *	- nextNonSpaceChar
  *	- lastChar
+ *	- countArgs
  ************************/
 
 /** find: find the first character in a string
@@ -418,6 +409,21 @@ int lastChar(char * c) {
 	return idx-1;
 }
 
+/** countArgs: count number of space-separated arguments
+ * @param c - String to search
+ * @return number of space-separated arguments
+ */
+int countArgs(char * c) {
+	int count = 0;
+	char * ptr = strtok(c, " ");
+	while (ptr != NULL) {
+		count++;
+		ptr = strtok(NULL, " ");
+	}
+	printf("countArgs:: count is %d\n", count);
+	return count;
+}
+
 
 
 /************************
@@ -442,7 +448,6 @@ void printArray(char ** c, int sz) {
  * @return ERROR_CODE (should be -1)
  */
 int throwError() {
-
 	char * error_message = "An error has occurred\n";
 	write(STDERR_FILENO, error_message, strlen(error_message));
 	return ERROR_CODE;
@@ -492,7 +497,6 @@ int changeDirectory(char * c) {
 
 	//otherwise user gave more info about directory traversal
 	else {
-
 		stripChar(c, '\n'); //remove newline
 		strtok(c, " "); //skip to path characters
 		char * token[SIZE];
@@ -528,17 +532,19 @@ int changeDirectory(char * c) {
 				return throwError();
 			}
 
+		}
 
-		} else {
-		//means a relative path
+		// relative path
+		else {
 			copyStack(); //save the stack state of path
 			bool root = false;
 
 			int f = 0;
 			for (f; f <z; f++) {
 				if (strncmp(dotdot, token[f], 2) == 0) {
+					// user tries to traverse past root
 					if (stackPointer == 0) {
-						root = true; //user tries to traverse past root
+						root = true;
 						break;
 					} else {
 						pop();
@@ -548,8 +554,8 @@ int changeDirectory(char * c) {
 				}
 			}
 
-			if (root == false) {
-			//user has not gone past root
+			// user has not gone past root
+			if (!root) {
 				strcat(path, "/");
 				int p = 0;
 				for (p; p < stackPointer; p++) {
@@ -562,9 +568,11 @@ int changeDirectory(char * c) {
 					replaceStack();
 					return throwError();
 				}
-			} else {
-			//user goes past root, in command, so reload stack
-				replaceStack(); //return stack to previous state, since user messed up
+			}
+
+			// user goes past root, in command, so reload stack
+			else {
+				replaceStack();
 				return throwError();
 			}
 		}
@@ -572,6 +580,7 @@ int changeDirectory(char * c) {
 
 	return SUCCESS;
 }
+
 
 /** parse: parse user input and call the appropriate commands
  * @param input - user input (beginning with "cd ")
@@ -591,12 +600,26 @@ int parse(char * input) {
 	/* builtin: '!!' and '!n' */
 
 	// '!!' run last command
-	if (strncmp(bangbang, cmd, 2) == 0) {
+	if (strcmp(bangbang, cmd) == 0) {
+
+		// no commands yet
+		if (historyCount == 0) {
+			return throwError();
+		}
 		strcpy(input, historyArr[historyCount-1]);
+
+		// reset command
+		strcpy(util, input);
+		ptr = strtok(util, "> ");
+		cmd = ptr;
 	}
 
 	// '!n' run nth command in history
 	else if (strncmp(bang, cmd, 1) == 0) {
+		// no commands yet
+		if (historyCount == 0) {
+			return throwError();
+		}
 
 		int len = strlen(cmd);
 
@@ -608,7 +631,11 @@ int parse(char * input) {
 			// if the entry # is valid and within the last 10
 			if (n < historyCount && n > historyCount-10) {
 				strcpy(input, historyArr[n]);
-				puts(input);
+
+				// reset command
+				strcpy(util, input);
+				ptr = strtok(util, "> ");
+				cmd = ptr;
 			}
 
 			// the entry # is not valid
@@ -647,15 +674,13 @@ int parse(char * input) {
 			args++;
 		}
 
-		// check for the correct # of matched arguments
-		// or the '>' comes after the two args
-		if ((arrCount+1 != args) ||
-			(strlen(out) + strlen(cmd) < findFirst(input, '>'))) {
+		// check that we have 2 args and that the '>' comes after the two args
+		if (args != 2 || strlen(out) + strlen(cmd) < findFirst(input, '>')) {
 			return throwError();
 		}
 
 		// set redirect for outfile
-		int outfile = open(out, O_RDWR|O_CREAT|O_TRUNC, S_IXUSR|S_IXUSR|S_IRUSR);
+		int outfile = open(out, O_RDWR|O_TRUNC|O_CREAT, S_IRUSR|S_IWUSR|S_IXUSR);
 		savedSTDOUT = dup(STDOUT_FILENO);
 		dup2(outfile, STDOUT_FILENO);
 		close(outfile);
@@ -663,7 +688,8 @@ int parse(char * input) {
 
 	// recopy util
 	strcpy(util, input);
-	cmd = strtok(util, " ");
+	cmd = strtok(util, "> ");
+
 
 	/* remaining builtins */
 
@@ -697,7 +723,31 @@ int parse(char * input) {
 		return FORCE_EXIT;
 	}
 
-	// if STDOUT was redirected, reset it back to screen
+	// no cases matched! check with bash
+	else {
+		int spoon = fork();
+
+		// child process: runs bash
+		if (spoon == 0) {
+			strcpy(util, input);
+			int argc = 4;
+			char * argv[argc];
+
+			argv[0] = strtok(util, "> ");
+			int i = 1;
+			for (i; i < argc; i++) {
+				argv[i] = strtok(NULL, "> ");
+			}
+
+			int res = execvp(argv[0], argv);
+		}
+		//parent does nothing
+		else {
+			wait(NULL);
+		}
+	}
+
+	// reset bools
 	if (savedSTDOUT != -1) {
 		dup2(savedSTDOUT, STDOUT_FILENO);
 		savedSTDOUT = -1;
@@ -726,6 +776,7 @@ int main(int argc, char * argv[]) {
 			return throwError();
 		}
 	}
+
 	// loop until user exits
 	while (1) {
 
